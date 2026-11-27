@@ -1,127 +1,37 @@
-import { useEffect, useState } from "react";
+import { useEffect,useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged,signOut,updateProfile,updatePassword } from "firebase/auth";
 import { auth } from "../firebase";
-import { theme } from "./authTheme";
 import SalesChart from "./SalesChart";
 
-export default function Dashboard() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
-
-  useEffect(() => {
-    // Firebase tells us the current user asynchronously, so we listen for it
-    // instead of reading localStorage synchronously.
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (!firebaseUser) {
-        navigate("/login");
-        return;
-      }
-      setUser({
-        name: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "User",
-        email: firebaseUser.email || "",
-      });
-    });
-
-    return unsubscribe;
-  }, [navigate]);
-
-  const logout = async () => {
-    await signOut(auth);
-    navigate("/login");
-  };
-
-  return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <div style={styles.avatar}>{user?.name?.[0]?.toUpperCase()}</div>
-        <h1 style={styles.title}>Welcome, {user?.name}</h1>
-        <p style={styles.email}>{user?.email}</p>
-        <p style={styles.msg}>You're signed in.</p>
-        <button onClick={logout} style={styles.btn}>
-          Log out
-        </button>
-      </div>
-
-      <div style={styles.chartCard}>
-        <SalesChart />
-      </div>
-    </div>
-  );
+const CSS=`
+.dash-root{min-height:100vh;background:#F6F8FC;color:#172033;font-family:Inter,system-ui,sans-serif}
+.dash-top{height:76px;border-bottom:1px solid #E7EBF2;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;background:rgba(255,255,255,.9);position:sticky;top:0;z-index:5;backdrop-filter:blur(16px)}
+.dash-brand{display:flex;align-items:center;gap:11px;font-weight:750;letter-spacing:-.025em}.dash-logo{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(135deg,#6969E8,#2699C5);font-weight:800;color:white}
+.dash-action{border:1px solid #D9E0EA;border-radius:10px;background:#fff;color:#344054;padding:10px 15px;font-weight:650;cursor:pointer}.dash-action:disabled{opacity:.5;cursor:wait}.dash-action.primary{background:linear-gradient(100deg,#6263DF,#477DCB);border:0;color:white}
+.dash-wrap{max-width:1160px;padding:42px 28px 64px;margin:auto}.dash-kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#5556CE;font-weight:750}.dash-title{font-size:clamp(27px,4vw,36px);letter-spacing:-.045em;margin:9px 0 7px}.dash-muted{color:#667085;font-size:13px;line-height:1.6}
+.dash-grid{display:grid;grid-template-columns:1.45fr 1fr;gap:18px;margin-top:28px}.dash-panel{border:1px solid #E5EAF2;border-radius:18px;background:#fff;padding:24px;box-shadow:0 12px 34px rgba(23,32,51,.055)}
+.dash-profile{display:flex;align-items:center;gap:16px}.dash-avatar{height:58px;width:58px;flex:none;border-radius:18px;display:grid;place-items:center;background:linear-gradient(140deg,#6969E8,#2699C5);font-size:23px;font-weight:800;color:white}
+.dash-stat{font-size:24px;font-weight:760;letter-spacing:-.04em;margin-top:12px}.dash-section-title{font-size:15px;font-weight:700;margin:0 0 16px}.dash-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:13px 0;border-top:1px solid #EEF1F6;font-size:13px}
+.dash-tag{font-size:11px;color:#027A48;background:#ECFDF3;border:1px solid #D1FADF;padding:5px 9px;border-radius:20px}
+.dash-input{width:100%;height:43px;margin-top:7px;border:1px solid #D9E0EA;border-radius:10px;background:#fff;color:#172033;padding:0 12px;outline:none}.dash-input:focus{border-color:#6969E8;box-shadow:0 0 0 3px rgba(91,92,226,.10)}.dash-label{font-size:11px;color:#475467;font-weight:650}
+@media(max-width:780px){.dash-grid{grid-template-columns:1fr}.dash-wrap{padding:30px 18px 48px}.dash-top{padding:0 18px}}@media(max-width:480px){.dash-top{height:66px}.dash-brand{font-size:13px}.dash-action{padding:9px 11px;font-size:12px}}
+`;
+export default function Dashboard(){
+ const navigate=useNavigate();const [user,setUser]=useState({name:"",email:""});const [profileName,setProfileName]=useState("");const [newPassword,setNewPassword]=useState("");const [message,setMessage]=useState("");const [busy,setBusy]=useState(false);
+ useEffect(()=>{if(!document.getElementById("dashboard-light-styles")){const style=document.createElement("style");style.id="dashboard-light-styles";style.textContent=CSS;document.head.appendChild(style)}
+ const unsubscribe=onAuthStateChanged(auth,fbUser=>{if(!fbUser){navigate("/login");return}const name=fbUser.displayName||fbUser.email?.split("@")[0]||"User";setUser({name,email:fbUser.email||""});setProfileName(name)});return unsubscribe},[navigate]);
+ const logout=async()=>{await signOut(auth);navigate("/login")};
+ const saveProfile=async(e:React.FormEvent)=>{e.preventDefault();setMessage("");setBusy(true);try{if(!auth.currentUser)throw new Error("Your session has ended. Please sign in again.");await updateProfile(auth.currentUser,{displayName:profileName.trim()});setUser({...user,name:profileName.trim()});setMessage("Your profile name has been updated.")}catch(err:any){setMessage(err.message||"Unable to update profile.")}finally{setBusy(false)}};
+ const savePassword=async(e:React.FormEvent)=>{e.preventDefault();setMessage("");setBusy(true);try{if(!auth.currentUser)throw new Error("Your session has ended. Please sign in again.");if(newPassword.length<6)throw new Error("Password must be at least 6 characters.");await updatePassword(auth.currentUser,newPassword);setNewPassword("");setMessage("Your password has been changed.")}catch(err:any){setMessage(err.code==="auth/requires-recent-login"?"For security, sign out and sign in again before changing your password.":err.message||"Unable to update password.")}finally{setBusy(false)}};
+ return <div className="dash-root"><header className="dash-top"><div className="dash-brand"><span className="dash-logo">A</span>Authentication System</div><button className="dash-action" onClick={logout}>Sign out ↗</button></header>
+ <main className="dash-wrap"><div className="dash-kicker">Your secure workspace</div><h1 className="dash-title">Welcome back, {user.name||"User"}.</h1><p className="dash-muted">Your account is active. Manage your profile and keep your sign-in details up to date.</p>
+ <section className="dash-grid"><div className="dash-panel"><div className="dash-profile"><div className="dash-avatar">{(user.name||"U").charAt(0).toUpperCase()}</div><div style={{minWidth:0}}><div style={{fontSize:19,fontWeight:750,letterSpacing:"-.03em"}}>{user.name||"Loading profile…"}</div><div className="dash-muted" style={{marginTop:5,wordBreak:"break-word"}}>{user.email}</div></div><span className="dash-tag" style={{marginLeft:"auto"}}>Verified session</span></div>
+ <div style={{marginTop:28,display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><div style={{padding:16,borderRadius:13,background:"#F3F1FF",border:"1px solid #E7E4FF"}}><div className="dash-muted">Account status</div><div className="dash-stat" style={{fontSize:18}}>Active</div></div><div style={{padding:16,borderRadius:13,background:"#EFF8FF",border:"1px solid #D1E9FF"}}><div className="dash-muted">Sign-in method</div><div className="dash-stat" style={{fontSize:18}}>Email</div></div></div>
+ <div className="dash-muted" style={{marginTop:25,marginBottom:12}}>Illustrative account activity · sample chart data</div><SalesChart/></div>
+ <div style={{display:"grid",gap:18,alignContent:"start"}}><section className="dash-panel"><h2 className="dash-section-title">Profile settings</h2><form onSubmit={saveProfile}><label className="dash-label">Display name<input className="dash-input" value={profileName} onChange={e=>setProfileName(e.target.value)} required/></label><div className="dash-row"><span className="dash-muted">Email address</span><span style={{fontSize:12,color:"#344054",overflowWrap:"anywhere"}}>{user.email}</span></div><button className="dash-action primary" style={{marginTop:15,width:"100%"}} disabled={busy}>Save profile</button></form></section>
+ <section className="dash-panel"><h2 className="dash-section-title">Security</h2><p className="dash-muted" style={{marginTop:-7,marginBottom:16}}>Update your password. You may need to sign in again first.</p><form onSubmit={savePassword}><label className="dash-label">New password<input className="dash-input" type="password" autoComplete="new-password" minLength={6} value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="At least 6 characters" required/></label><button className="dash-action" style={{marginTop:15,width:"100%"}} disabled={busy}>Update password</button></form></section>
+ <section className="dash-panel"><h2 className="dash-section-title">Account activity</h2><div className="dash-row"><span className="dash-muted">Authentication provider</span><span className="dash-tag">Firebase</span></div><div className="dash-row"><span className="dash-muted">Current session</span><span style={{color:"#027A48"}}>Signed in</span></div></section>
+ {message&&<div role="status" className="dash-panel" style={{padding:14,color:message.toLowerCase().includes("unable")||message.toLowerCase().includes("security")?"#B42318":"#027A48",fontSize:13}}>{message}</div>}</div></section>
+ <p className="dash-muted" style={{textAlign:"center",marginTop:34,fontSize:11}}>Keep your account secure. Never share your password or reset links.</p></main></div>;
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  page: {
-    minHeight: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 32,
-    padding: "40px 16px",
-    background: theme.color.paper,
-    fontFamily: theme.font.body,
-  },
-  card: {
-    background: "#fff",
-    borderRadius: theme.radius.lg,
-    padding: "48px 44px",
-    textAlign: "center",
-    border: `1px solid ${theme.color.sand}`,
-    boxShadow: "0 20px 50px rgba(45,27,61,0.08)",
-    maxWidth: 380,
-    width: "100%",
-  },
-  chartCard: {
-    background: "#fff",
-    borderRadius: theme.radius.lg,
-    padding: "32px",
-    border: `1px solid ${theme.color.sand}`,
-    boxShadow: "0 20px 50px rgba(45,27,61,0.08)",
-    maxWidth: 700,
-    width: "100%",
-  },
-  avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: "50%",
-    background: theme.color.terracotta,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: 30,
-    fontWeight: 600,
-    color: "#fff",
-    margin: "0 auto 20px",
-    fontFamily: theme.font.display,
-  },
-  title: {
-    fontFamily: theme.font.display,
-    fontSize: 26,
-    fontWeight: 600,
-    color: theme.color.charcoal,
-    margin: 0,
-  },
-  email: {
-    color: theme.color.charcoalSoft,
-    marginTop: 6,
-    fontSize: 14,
-  },
-  msg: {
-    color: theme.color.charcoalSoft,
-    marginTop: 14,
-    fontSize: 14,
-  },
-  btn: {
-    marginTop: 28,
-    padding: "12px 32px",
-    borderRadius: theme.radius.sm,
-    border: `1px solid ${theme.color.sand}`,
-    background: "#fff",
-    color: theme.color.charcoal,
-    fontSize: 15,
-    fontWeight: 600,
-    cursor: "pointer",
-    fontFamily: theme.font.body,
-  },
-};
