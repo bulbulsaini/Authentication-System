@@ -30,7 +30,7 @@ const PrivateRoute = ({ children }: { children: ReactElement }) => {
 
 export default function App() {
   return (
-    <BrowserRouter>
+<BrowserRouter basename="/Authentication-System">
       <Routes>
         <Route path="/"                element={<Navigate to="/login" />} />
         <Route path="/login"           element={<Login />} />
