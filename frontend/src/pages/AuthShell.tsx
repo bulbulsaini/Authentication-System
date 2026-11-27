@@ -43,7 +43,7 @@ export function AuthShell({step,children}:{step:Step;children:ReactNode}){
  </div></section><aside className="auth-visual"><div className="auth-orbit"/><div className="auth-glow-card"/><div className="auth-visual-copy"><span className="auth-step">AUTHENTICATION SYSTEM / {copy.number}</span><h2 className="auth-visual-title">{copy.title}</h2><p className="auth-visual-desc">{copy.description}</p><div className="auth-visual-footer"><span className="auth-status-dot"/> SECURE ACCOUNT ACCESS</div></div></aside></main>;
 }
 export function Field({label,...props}:{label:string}&React.InputHTMLAttributes<HTMLInputElement>){return <label className="auth-field"><span className="auth-label">{label}</span><input className="auth-input" {...props}/></label>}
-export function PasswordField({label,...props}:{label:string}&React.InputHTMLAttributes<HTMLInputElement>}){
+export function PasswordField({label,...props}:{label:string}&React.InputHTMLAttributes<HTMLInputElement>){
  const [visible,setVisible]=useState(false);
  return <label className="auth-field" style={{display:"block",position:"relative"}}><span className="auth-label">{label}</span><input className="auth-input" style={{paddingRight:64}} type={visible?"text":"password"} {...props}/><button className="auth-showpass" type="button" onClick={()=>setVisible(v=>!v)}>{visible?"Hide":"Show"}</button></label>
 }
