@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ReactElement, useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
@@ -30,7 +30,7 @@ const PrivateRoute = ({ children }: { children: ReactElement }) => {
 
 export default function App() {
   return (
-<BrowserRouter basename="/Authentication-System">
+<HashRouter>
       <Routes>
         <Route path="/"                element={<Navigate to="/login" />} />
         <Route path="/login"           element={<Login />} />
@@ -40,6 +40,6 @@ export default function App() {
         <Route path="/reset-password"  element={<ResetPassword />} />
         <Route path="/dashboard"       element={<PrivateRoute><Dashboard /></PrivateRoute>} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
